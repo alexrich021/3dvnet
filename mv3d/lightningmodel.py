@@ -91,6 +91,8 @@ class PL3DVNet(pl.LightningModule):
         metrics['loss_2d'] = loss_refine_quarter
         out['quarter'] = metrics
 
+        loss += loss_refine_quarter
+
         # 1/4 --> 1/2
         depth_pred = F.interpolate(depth_pred.unsqueeze(1), feats_half.shape[-2:], mode='nearest').squeeze(1)
         depth_pred = self.refine_half(feats_half[ref_idx], depth_pred.unsqueeze(1)).squeeze(1)
@@ -102,6 +104,8 @@ class PL3DVNet(pl.LightningModule):
         metrics['loss_2d'] = loss_refine_half
         out['half'] = metrics
 
+        loss += loss_refine_half
+
         # 1/2 --> image size
         depth_pred = F.interpolate(depth_pred.unsqueeze(1), batch.images.shape[-2:], mode='nearest').squeeze(1)
         depth_pred = self.refine_full(batch.images[ref_idx], depth_pred.unsqueeze(1)).squeeze(1)
@@ -111,6 +115,8 @@ class PL3DVNet(pl.LightningModule):
         metrics = calc_2d_depth_metrics(depth_pred, batch.depth_images)
         metrics['loss_2d'] = loss_refine
         out['final'] = metrics
+
+        loss += loss_refine
 
         out['loss'] = loss
         return out
